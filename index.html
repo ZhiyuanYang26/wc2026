@@ -1480,7 +1480,7 @@ function renderBracketCard(matchId, pos, variant) {
 
     // Team name
     const clip = ds === 'home' ? clipHId : clipAId;
-    o += `<text x="${nameX}" y="${baseline}" font-size="${nameFs}" font-weight="${fontWeight}" fill="${textFill}" font-family="inherit" clip-path="url(#${clip})">${escape(sideObj.name || '—')}</text>`;
+    o += `<text x="${nameX}" y="${baseline}" font-size="${nameFs}" font-weight="${fontWeight}" fill="${textFill}" font-family="inherit" clip-path="url(#${clip})">${escape(sideObj.name || '')}</text>`;
 
     // Score inputs in minimal foreignObject
     const inX = x + w - scoreW - 2;
