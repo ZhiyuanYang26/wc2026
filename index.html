@@ -1519,6 +1519,9 @@ function renderRoundLabels() {
 
 function renderBracket() {
   const root = document.getElementById('bracket-content');
+  // Save scroll position to preserve user's panning after re-render
+  const prevWrap = root.querySelector('.bracket-wrap');
+  const prevScrollLeft = prevWrap ? prevWrap.scrollLeft : 0;
   const status = advancementStatus();
   const layout = computeBracketLayout();
 
@@ -1557,6 +1560,9 @@ function renderBracket() {
   }
 
   root.innerHTML = html;
+  // Restore horizontal scroll position
+  const newWrap = root.querySelector('.bracket-wrap');
+  if (newWrap && prevScrollLeft) newWrap.scrollLeft = prevScrollLeft;
   root.querySelectorAll('.b-click-target').forEach(el => {
     el.addEventListener('click', onBracketClick);
   });
