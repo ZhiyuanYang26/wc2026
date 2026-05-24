@@ -1235,15 +1235,16 @@ function onScoreKeydown(e) {
 }
 let _renderT = null;
 function scheduleRenderScores() {
-  if (_renderT) return;
+  clearTimeout(_renderT);
   _renderT = setTimeout(() => {
     _renderT = null;
-    // Only re-render standings to avoid losing focus
     GROUP_LETTERS.forEach(g => {
-      const card = document.querySelectorAll('#scores-grid .gcard')[GROUP_LETTERS.indexOf(g)];
+      const cards = document.querySelectorAll('#scores-grid .gcard');
+      const card = cards[GROUP_LETTERS.indexOf(g)];
       if (!card) return;
       const standings = computeStandings(g);
       const standEl = card.querySelector('.stand');
+      if (!standEl) return;
       let html = '<div class="stand-row head"><span class="pos">#</span><span class="nm">球队</span><span class="pts">分</span><span class="v">净</span><span class="v">进</span></div>';
       standings.forEach((s, i) => {
         const rk = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
@@ -1255,7 +1256,8 @@ function scheduleRenderScores() {
       const totalPlayed = state.scores[g].filter(s => s[0] != null && s[1] != null).length;
       if (meta) meta.textContent = totalPlayed + '/6';
     });
-  }, 60);
+    renderThirdsPanel();
+  }, 80);
 }
 
 // ============================================================
@@ -1530,8 +1532,8 @@ function renderBracket() {
   root.querySelectorAll('.sc-main, .sc-pen').forEach(el => {
     el.addEventListener('click', e => e.stopPropagation());
     el.addEventListener('mousedown', e => e.stopPropagation());
-    el.addEventListener('input', onScoreInput);
-    el.addEventListener('blur', onScoreBlur);
+    el.addEventListener('input', onKoScoreInput);
+    el.addEventListener('blur', onKoScoreBlur);
     el.addEventListener('keydown', e => {
       if (e.key === 'Enter') e.currentTarget.blur();
     });
@@ -1557,14 +1559,14 @@ function onBracketClick(e) {
   renderBracket();
 }
 
-function onScoreInput(e) {
+function onKoScoreInput(e) {
   // Restrict to single digit 0-9 (cap at 2 chars max, but football scores rarely > 9)
   let v = e.currentTarget.value.replace(/\D/g, '');
   if (v.length > 2) v = v.slice(0, 2);
   e.currentTarget.value = v;
 }
 
-function onScoreBlur(e) {
+function onKoScoreBlur(e) {
   const el = e.currentTarget;
   const matchId = el.dataset.match;
   const side = el.dataset.side;
