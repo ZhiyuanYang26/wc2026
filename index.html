@@ -346,11 +346,8 @@ section { margin-top: 56px; scroll-margin-top: 80px; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  min-width: 0;
 }
-.b-card .fi { width: 1.05em; height: 0.78em; margin-right: 3px; flex-shrink: 0; }
+.b-card .fi { width: 1.05em; height: 0.78em; margin-right: 3px; margin-left: 0; vertical-align: -0.03em; }
 .b-sc-wrap {
   margin-left: auto;
   display: inline-flex; align-items: center; gap: 1px;
@@ -1420,40 +1417,85 @@ function renderBracketCard(matchId, pos, variant) {
   const sides = sidesOf(matchId);
   const choice = state.ko[matchId];
   const hWin = choice === 'home', aWin = choice === 'away';
-  const hCls = sides.home.name ? (hWin ? 'win' : (aWin ? 'lose' : '')) : 'pending';
-  const aCls = sides.away.name ? (aWin ? 'win' : (hWin ? 'lose' : '')) : 'pending';
-  const variantCls = variant ? ` ${variant}` : '';
   const sc = state.koScores && state.koScores[matchId];
   const hMain = sc && sc.score && sc.score[0] != null ? sc.score[0] : '';
   const aMain = sc && sc.score && sc.score[1] != null ? sc.score[1] : '';
-  const hPen  = sc && sc.pen && sc.pen[0] != null ? sc.pen[0] : '';
-  const aPen  = sc && sc.pen && sc.pen[1] != null ? sc.pen[1] : '';
-  // Show penalty input only when match is a draw (both scores filled equal) or pen value already exists
-  const showPen = (sc && sc.score && sc.score[0] != null && sc.score[1] != null && sc.score[0] === sc.score[1])
-                  || (sc && sc.pen);
-  const penWrapCls = showPen ? 'sc-pen-wrap show' : 'sc-pen-wrap';
-  const hasHome = !!sides.home.name;
-  const hasAway = !!sides.away.name;
-  return `<foreignObject x="${pos.x}" y="${pos.y}" width="${pos.w}" height="${pos.h}">
-    <div xmlns="http://www.w3.org/1999/xhtml" class="b-card${variantCls}">
-      <div class="b-side ${hCls}" data-match="${matchId}" data-side="home">
-        <span class="b-slot">${escape(sides.home.slot)}</span>
-        <span class="b-nm">${sides.home.name ? teamWithFlag(sides.home.name) : '—'}</span>
-        <span class="b-sc-wrap">
-          <input class="sc-main" type="text" inputmode="numeric" maxlength="2" value="${hMain}" placeholder="–" ${hasHome ? '' : 'disabled'} data-match="${matchId}" data-side="home" data-pen="0" />
-          <span class="${penWrapCls}">(<input class="sc-pen" type="text" inputmode="numeric" maxlength="2" value="${hPen}" placeholder="–" data-match="${matchId}" data-side="home" data-pen="1" />)</span>
-        </span>
-      </div>
-      <div class="b-side ${aCls}" data-match="${matchId}" data-side="away">
-        <span class="b-slot">${escape(sides.away.slot)}</span>
-        <span class="b-nm">${sides.away.name ? teamWithFlag(sides.away.name) : '—'}</span>
-        <span class="b-sc-wrap">
-          <input class="sc-main" type="text" inputmode="numeric" maxlength="2" value="${aMain}" placeholder="–" ${hasAway ? '' : 'disabled'} data-match="${matchId}" data-side="away" data-pen="0" />
-          <span class="${penWrapCls}">(<input class="sc-pen" type="text" inputmode="numeric" maxlength="2" value="${aPen}" placeholder="–" data-match="${matchId}" data-side="away" data-pen="1" />)</span>
-        </span>
-      </div>
-    </div>
-  </foreignObject>`;
+  const hPen  = sc && sc.pen  && sc.pen[0]   != null ? sc.pen[0]   : '';
+  const aPen  = sc && sc.pen  && sc.pen[1]   != null ? sc.pen[1]   : '';
+  const showPen = (sc && sc.score && sc.score[0] != null && sc.score[1] != null && sc.score[0] === sc.score[1]) || (sc && sc.pen);
+  const isFinal = variant === 'final';
+
+  const x = pos.x, y = pos.y, w = pos.w, h = pos.h;
+  const sideH = h / 2;
+  const nameFs = isFinal ? 12 : 10;
+  const slotFs = isFinal ? 9 : 8;
+
+  // Layout constants
+  const slotW = 18, flagW = 14, flagH = 11, flagGap = 3;
+  const nameX = x + slotW + flagW + flagGap;
+  const scoreW = showPen ? 30 : 20;
+  const nameW = w - (nameX - x) - scoreW - 6;
+
+  const clipHId = `clip${matchId}h`;
+  const clipAId = `clip${matchId}a`;
+
+  let o = '';
+
+  // Clip paths for team name overflow
+  o += `<defs>
+    <clipPath id="${clipHId}"><rect x="${nameX}" y="${y}" width="${nameW}" height="${sideH}"/></clipPath>
+    <clipPath id="${clipAId}"><rect x="${nameX}" y="${y+sideH}" width="${nameW}" height="${sideH}"/></clipPath>
+  </defs>`;
+
+  // Card background + border
+  o += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>`;
+
+  // Win highlights
+  if (hWin) o += `<rect x="${x+1}" y="${y+1}" width="${w-2}" height="${sideH-1}" rx="2" fill="rgba(212,155,46,0.16)"/>`;
+  if (aWin) o += `<rect x="${x+1}" y="${y+sideH}" width="${w-2}" height="${sideH-1}" rx="2" fill="rgba(212,155,46,0.16)"/>`;
+
+  // Divider
+  o += `<line x1="${x}" y1="${y+sideH}" x2="${x+w}" y2="${y+sideH}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="2,2"/>`;
+
+  function side(sideObj, sideY, isWin, isLose, mainVal, penVal, ds) {
+    const midY = sideY + sideH / 2;
+    const baseline = midY + (nameFs * 0.35); // approx cap-height offset
+    const muted = isLose || !sideObj.name;
+    const textFill  = isWin ? 'var(--gold-deep)' : (muted ? 'var(--hint)' : 'var(--navy)');
+    const slotFill  = isWin ? 'var(--gold-deep)' : 'var(--hint)';
+    const fontWeight = isWin ? '600' : '400';
+
+    // Slot
+    o += `<text x="${x+4}" y="${baseline}" font-size="${slotFs}" font-weight="700" fill="${slotFill}" font-family="inherit">${escape(sideObj.slot)}</text>`;
+
+    // Flag as SVG <image> — no CSS dependency, exact px positioning
+    if (sideObj.name) {
+      const fc = TEAM_FLAGS[sideObj.name];
+      if (fc) {
+        const fy = midY - flagH / 2;
+        const op = isLose ? '0.4' : '1';
+        o += `<image href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/${fc}.svg" x="${x+slotW}" y="${fy}" width="${flagW}" height="${flagH}" preserveAspectRatio="xMidYMid meet" opacity="${op}"/>`;
+      }
+    }
+
+    // Team name
+    const clip = ds === 'home' ? clipHId : clipAId;
+    o += `<text x="${nameX}" y="${baseline}" font-size="${nameFs}" font-weight="${fontWeight}" fill="${textFill}" font-family="inherit" clip-path="url(#${clip})">${escape(sideObj.name || '—')}</text>`;
+
+    // Score inputs in minimal foreignObject
+    const inX = x + w - scoreW - 2;
+    const inY = sideY + 2;
+    const inH = sideH - 4;
+    o += `<foreignObject x="${inX}" y="${inY}" width="${scoreW}" height="${inH}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:flex-end;height:100%;gap:0;"><input class="sc-main" type="text" inputmode="numeric" maxlength="2" value="${mainVal}" placeholder="–" ${sideObj.name ? '' : 'disabled'} data-match="${matchId}" data-side="${ds}" data-pen="0" style="width:14px;text-align:center;font-size:${nameFs}px;border:none;background:transparent;padding:0;color:${isWin ? 'var(--gold-deep)' : 'inherit'};"/>${showPen ? `<span style="font-size:7px;color:var(--hint);">(</span><input class="sc-pen" type="text" inputmode="numeric" maxlength="2" value="${penVal}" placeholder="–" data-match="${matchId}" data-side="${ds}" data-pen="1" style="width:10px;text-align:center;font-size:${nameFs}px;border:none;background:transparent;padding:0;"/><span style="font-size:7px;color:var(--hint);">)</span>` : ''}</div></foreignObject>`;
+
+    // Transparent click target
+    o += `<rect x="${x}" y="${sideY}" width="${w - scoreW - 4}" height="${sideH}" fill="transparent" class="b-click-target" data-match="${matchId}" data-side="${ds}" style="cursor:${sideObj.name ? 'pointer' : 'default'};"/>`;
+  }
+
+  side(sides.home, y,        hWin, aWin, hMain, hPen, 'home');
+  side(sides.away, y + sideH, aWin, hWin, aMain, aPen, 'away');
+
+  return o;
 }
 
 function renderRoundLabels() {
@@ -1515,7 +1557,7 @@ function renderBracket() {
   }
 
   root.innerHTML = html;
-  root.querySelectorAll('.b-side').forEach(el => {
+  root.querySelectorAll('.b-click-target').forEach(el => {
     el.addEventListener('click', onBracketClick);
   });
   root.querySelectorAll('.sc-main, .sc-pen').forEach(el => {
