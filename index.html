@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>世界杯 2026 预测器</title>
+<title>2026 世界杯数据台</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css">
 <style>
 :root {
@@ -31,7 +31,7 @@ body {
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "tnum" 1;
 }
-.app { max-width: 1320px; margin: 0 auto; padding: 0 24px 80px; }
+.app { max-width: 1360px; margin: 0 auto; padding: 0 20px 80px; }
 
 /* Flag styles - override flag-icons defaults for consistent look */
 .fi {
@@ -99,7 +99,7 @@ section { margin-top: 56px; scroll-margin-top: 80px; }
   letter-spacing: 0.08em; border: 1px solid var(--gold);
   padding: 2px 8px; border-radius: 4px;
 }
-.sec-head .desc { color: var(--muted); font-size: 13px; flex: 1; }
+.sec-head .desc { color: var(--muted); font-size: 13px; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
 .sec-head .right { display: flex; gap: 8px; }
 .sec-head button.primary {
   font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px;
@@ -137,34 +137,21 @@ section { margin-top: 56px; scroll-margin-top: 80px; }
   background: var(--card); border: 1px solid var(--border);
   border-radius: 8px; padding: 14px 16px; box-shadow: var(--shadow);
   margin-top: 16px;
+  width: calc(50% - 8px);
 }
+@media (max-width: 1024px) { #thirds-panel { width: 100%; } }
 .thirds-title {
   font-size: 11px; letter-spacing: 0.2em; color: var(--hint);
   text-transform: uppercase; font-weight: 700;
   margin-bottom: 10px; padding-bottom: 8px;
   border-bottom: 1px dashed var(--border-strong);
 }
-.thirds-rows {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 24px;
-}
-@media (max-width: 640px) { .thirds-rows { grid-template-columns: 1fr; } }
-.thirds-row {
-  display: grid;
-  grid-template-columns: 20px 1fr 30px 30px 26px 26px;
-  align-items: center; gap: 6px;
-  font-size: 12px; padding: 5px 8px; border-radius: 4px;
-  font-variant-numeric: tabular-nums;
-}
-.thirds-header {
-  display: grid;
-  grid-template-columns: 20px 1fr 30px 30px 26px 26px;
-  gap: 6px;
-  padding: 0 8px 4px;
-  font-size: 10px; font-weight: 700; color: var(--hint);
-  letter-spacing: 0.08em;
-}
+.thirds-rows { display: flex; flex-wrap: wrap; gap: 0 24px; }
+.thirds-col { flex: 1 1 220px; min-width: 0; }
+.thirds-col:not(:first-child) .thirds-header-r { display: block; }
+.thirds-rows.stacked .thirds-col:not(:first-child) .thirds-header-r { display: none; }
+.thirds-header-l, .thirds-header-r { display: grid; grid-template-columns: 20px 1fr 30px 30px 26px 26px; gap: 6px; padding: 0 8px 4px; font-size: 10px; font-weight: 700; color: var(--hint); letter-spacing: 0.08em; margin-bottom: 2px; }
+.thirds-row { display: grid; grid-template-columns: 20px 1fr 30px 30px 26px 26px; align-items: center; gap: 6px; font-size: 12px; padding: 5px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; margin-bottom: 3px; }
 .thirds-row.advance { background: rgba(212,155,46,0.12); font-weight: 600; }
 .thirds-row.advance .thirds-rank { color: var(--gold-deep); font-weight: 700; }
 .thirds-row.out { color: var(--hint); }
@@ -1663,26 +1650,21 @@ function renderThirdsPanel() {
     return { group: g, name: state.teams[g][t.idx], pts: t.pts, gd: t.gd, gf: t.gf };
   });
   thirds.sort((x, y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf);
-  const left  = thirds.slice(0, 6);
-  const right = thirds.slice(6, 12);
-  let html = `
-    <div class="thirds-header">
-      <span></span><span></span><span></span>
-      <span class="thirds-col-hd">分</span>
-      <span class="thirds-col-hd">净</span>
-      <span class="thirds-col-hd">进</span>
-    </div>
-    <div class="thirds-header">
-      <span></span><span></span><span></span>
-      <span class="thirds-col-hd">分</span>
-      <span class="thirds-col-hd">净</span>
-      <span class="thirds-col-hd">进</span>
-    </div>`;
-  for (let i = 0; i < 6; i++) {
-    html += rowHtml(left[i], i);
-    if (right[i]) html += rowHtml(right[i], i + 6);
-  }
-  root.innerHTML = html;
+  const hdrL = `<div class="thirds-header-l"><span></span><span></span><span></span><span class="thirds-col-hd">分</span><span class="thirds-col-hd">净</span><span class="thirds-col-hd">进</span></div>`;
+  const hdrR = `<div class="thirds-header-r"><span></span><span></span><span></span><span class="thirds-col-hd">分</span><span class="thirds-col-hd">净</span><span class="thirds-col-hd">进</span></div>`;
+  let leftCol = hdrL;
+  for (let i = 0; i < 6; i++) leftCol += rowHtml(thirds[i], i);
+  let rightCol = hdrR;
+  for (let i = 6; i < 12; i++) rightCol += rowHtml(thirds[i], i);
+  root.innerHTML = `<div class="thirds-col">${leftCol}</div><div class="thirds-col">${rightCol}</div>`;
+  // Detect if cols stacked (flex-wrap), toggle 'stacked' class to hide second header
+  requestAnimationFrame(() => {
+    const cols = root.querySelectorAll('.thirds-col');
+    if (cols.length === 2) {
+      const stacked = cols[0].offsetTop !== cols[1].offsetTop;
+      root.classList.toggle('stacked', stacked);
+    }
+  });
   function rowHtml(t, i) {
     const rank = i + 1;
     const isAdvance = rank <= 8;
@@ -1821,6 +1803,22 @@ load();
 renderAll();
 wireNav();
 wireButtons();
+
+// Re-check thirds stacking on resize
+if (typeof ResizeObserver !== 'undefined') {
+  const panel = document.getElementById('thirds-panel');
+  if (panel) {
+    new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        const root = document.getElementById('thirds-rows');
+        const cols = root && root.querySelectorAll('.thirds-col');
+        if (cols && cols.length === 2) {
+          root.classList.toggle('stacked', cols[0].offsetTop !== cols[1].offsetTop);
+        }
+      });
+    }).observe(panel);
+  }
+}
 
 </script>
 </body>
