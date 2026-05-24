@@ -148,7 +148,6 @@ section { margin-top: 56px; scroll-margin-top: 80px; }
 }
 .thirds-rows { display: flex; flex-wrap: wrap; gap: 0 24px; }
 .thirds-col { flex: 1 1 220px; min-width: 0; }
-.thirds-col:not(:first-child) .thirds-header-r { display: block; }
 .thirds-rows.stacked .thirds-col:not(:first-child) .thirds-header-r { display: none; }
 .thirds-header-l, .thirds-header-r { display: grid; grid-template-columns: 20px 1fr 30px 30px 26px 26px; gap: 6px; padding: 0 8px 4px; font-size: 10px; font-weight: 700; color: var(--hint); letter-spacing: 0.08em; margin-bottom: 2px; }
 .thirds-row { display: grid; grid-template-columns: 20px 1fr 30px 30px 26px 26px; align-items: center; gap: 6px; font-size: 12px; padding: 5px 8px; border-radius: 4px; font-variant-numeric: tabular-nums; margin-bottom: 3px; }
@@ -347,8 +346,10 @@ section { margin-top: 56px; scroll-margin-top: 80px; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
 }
-.b-card .fi { width: 1.05em; height: 0.78em; margin-right: 3px; margin-left: 0; vertical-align: -0.03em; }
+.b-card .fi { width: 1.05em; height: 0.78em; margin-right: 3px; flex-shrink: 0; }
 .b-sc-wrap {
   margin-left: auto;
   display: inline-flex; align-items: center; gap: 1px;
